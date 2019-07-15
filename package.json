@@ -1,15 +1,33 @@
 {
-  "name": "giraffe",
+  "name": "giraphe",
   "version": "1.0.0",
   "description": "Make graphs easier",
   "main": "main.js",
   "scripts": {
     "test": "test",
-    "start": "electron ."
+    "start": "electron .",
+    "postinstall": "electron-builder install-app-deps"
   },
   "author": "Jordan Wick",
   "license": "ISC",
   "devDependencies": {
     "electron": "^5.0.6"
+  },
+  "homepage": "https://github.com/Jomanw/giraphe",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jomanw/giraphe"
+  },
+  "dependencies": {
+    "better-sqlite3": "^5.4.0",
+    "d3": "^5.9.7",
+    "electron-builder": "^21.0.15",
+    "electron-rebuild": "^1.8.5",
+    "mousetrap": "^1.6.3",
+    "redis": "^2.8.0",
+    "redis-server": "^1.2.2",
+    "requirejs": "^2.3.6",
+    "sqlite": "^3.0.3",
+    "sqlite3": "^4.0.9"
   }
 }

@@ -1,180 +1,149 @@
+var sqlite3 = require('sqlite3').verbose();
+var sqlite = require("better-sqlite3");
 
-var nodes = [...baseNodes]
-var links = [...baseLinks]
+var db = new sqlite3.Database('data.db');
+// var db = new sqlite('data.db');
 
-function getNeighbors(node) {
-  return baseLinks.reduce(function (neighbors, link) {
-      if (link.target.id === node.id) {
-        neighbors.push(link.source.id)
-      } else if (link.source.id === node.id) {
-        neighbors.push(link.target.id)
-      }
-      return neighbors
-    },
-    [node.id]
-  )
+
+
+
+
+
+var nodeElements, textElements, linkElements;
+var nodes, links;
+
+
+function getNodeColor(node) {
+  return node.workspace_id === 0 ? 'red' : 'gray'
 }
 
-function isNeighborLink(node, link) {
-  return link.target.id === node.id || link.source.id === node.id
+async function getNodesFromDb() {
+  var output = [];
+  db.serialize(function () {
+    db.each("SELECT * FROM nodes", function(err, row) {
+      output.push(row);
+    });
+  })
+  nodes = output;
+  return output;
 }
 
-function getNodeColor(node, neighbors) {
-  if (Array.isArray(neighbors) && neighbors.indexOf(node.id) > -1) {
-    return node.level === 1 ? 'blue' : 'green'
-  }
-  return node.level === 1 ? 'red' : 'gray'
-}
+async function getLinksFromDb() {
+  var output = [];
+  db.serialize(function () {
+    db.each("SELECT * FROM links", function(err, row) {
+      output.push(row);
+    });
+  });
+  links = output;
+  console.log(links)
 
-function getLinkColor(node, link) {
-  return isNeighborLink(node, link) ? 'green' : '#E5E5E5'
-}
-function getTextColor(node, neighbors) {
-  return Array.isArray(neighbors) && neighbors.indexOf(node.id) > -1 ? 'green' : 'black'
-}
-
-var width = window.innerWidth
-var height = window.innerHeight
-var svg = d3.select('svg')
-svg.attr('width', width).attr('height', height)
-var linkElements,
-  nodeElements,
-  textElements
-// we use svg groups to logically group the elements together
-var linkGroup = svg.append('g').attr('class', 'links')
-var nodeGroup = svg.append('g').attr('class', 'nodes')
-var textGroup = svg.append('g').attr('class', 'texts')
-// we use this reference to select/deselect
-// after clicking the same element twice
-var selectedId
-// simulation setup with all forces
-var linkForce = d3
-  .forceLink()
-  .id(function (link) { return link.id })
-  .strength(function (link) { return link.strength })
-
-var simulation = d3
-  .forceSimulation()
-  .force('link', linkForce)
-  .force('charge', d3.forceManyBody().strength(-120))
-  .force('center', d3.forceCenter(width / 2, height / 2))
-var dragDrop = d3.drag().on('start', function (node) {
-  node.fx = node.x
-  node.fy = node.y
-}).on('drag', function (node) {
-  simulation.alphaTarget(0.7).restart()
-  node.fx = d3.event.x
-  node.fy = d3.event.y
-}).on('end', function (node) {
-  if (!d3.event.active) {
-    simulation.alphaTarget(0)
-  }
-  node.fx = null
-  node.fy = null
-})
-// select node is called on every click
-// we either update the data according to the selection
-// or reset the data if the same node is clicked twice
-function selectNode(selectedNode) {
-  if (selectedId === selectedNode.id) {
-    selectedId = undefined
-    resetData()
-    updateSimulation()
-  } else {
-    selectedId = selectedNode.id
-    updateData(selectedNode)
-    updateSimulation()
-  }
-  var neighbors = getNeighbors(selectedNode)
-  // we modify the styles to highlight selected nodes
-  nodeElements.attr('fill', function (node) { return getNodeColor(node, neighbors) })
-  textElements.attr('fill', function (node) { return getTextColor(node, neighbors) })
-  linkElements.attr('stroke', function (link) { return getLinkColor(selectedNode, link) })
-}
-// this helper simple adds all nodes and links
-// that are missing, to recreate the initial state
-function resetData() {
-  var nodeIds = nodes.map(function (node) { return node.id })
-  baseNodes.forEach(function (node) {
-    if (nodeIds.indexOf(node.id) === -1) {
-      nodes.push(node)
+  setTimeout(function(){
+    var new_nodes= {}
+    for (node_id in nodes) {
+      node = nodes[node_id];
+      new_nodes[node.id] = node;
     }
-  })
-  links = baseLinks
+    for (link_id in links) {
+      link = links[link_id]
+      link.source = new_nodes[link.source]
+      link.target = new_nodes[link.target]
+    }
+    console.log("Old Links")
+    console.log(links)
+  }, 500)
+
+  return output;
 }
-// diffing and mutating the data
-function updateData(selectedNode) {
-  var neighbors = getNeighbors(selectedNode)
-  var newNodes = baseNodes.filter(function (node) {
-    return neighbors.indexOf(node.id) > -1 || node.level === 1
-  })
-  var diff = {
-    removed: nodes.filter(function (node) { return newNodes.indexOf(node) === -1 }),
-    added: newNodes.filter(function (node) { return nodes.indexOf(node) === -1 })
-  }
-  diff.removed.forEach(function (node) { nodes.splice(nodes.indexOf(node), 1) })
-  diff.added.forEach(function (node) { nodes.push(node) })
-  links = baseLinks.filter(function (link) {
-    return link.target.id === selectedNode.id || link.source.id === selectedNode.id
-  })
-}
-function updateGraph() {
-  // links
-  linkElements = linkGroup.selectAll('line')
-    .data(links, function (link) {
-      return link.target.id + link.source.id
+
+getNodesFromDb().then(getLinksFromDb()).then(function(data) {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  console.log(links)
+  console.log(nodes)
+  const svg = d3.select('svg')
+    .attr('width', width)
+    .attr('height', height)
+
+  const simulation = d3.forceSimulation()
+    .force('charge', d3.forceManyBody().strength(-20))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+
+  setTimeout(function() {
+    nodeElements = svg.append('g')
+      .selectAll('circle')
+      .data(nodes)
+      .enter().append('circle')
+        .attr('r', function(node) {
+          // console.log(node.title.length)
+          // return node.title.length;
+          return 10;
+        })
+        .attr('fill', getNodeColor)
+
+    textElements = svg.append('g')
+      .selectAll('text')
+      .data(nodes)
+      .enter().append('text')
+        .text(node => node.title)
+        .attr('font-size', 15)
+        // .attr("text-anchor", "middle")
+
+        .attr('dx', 15)
+        .attr('dy', 4)
+
+    linkElements = svg.append('g')
+      .selectAll('line')
+      .data(links)
+      .enter().append('line')
+        .attr('stroke-width', 1)
+        .attr('stroke', '#E5E5E5')
+
+    simulation.force('link', d3.forceLink()
+      .id(link => link.id)
+      .strength(link => link.strength))
+
+    // simulation.force('link').link(links)
+
+
+    simulation.nodes(data).on('tick', () => {
+      nodeElements
+        .attr("cx", node => node.x)
+        .attr("cy", node => node.y)
+      textElements
+        .attr("x", node => node.x)
+        .attr("y", node => node.y)
+      linkElements
+        .attr('x1', link => link.source.x)
+        .attr('y1', link => link.source.y)
+        .attr('x2', link => link.target.x)
+        .attr('y2', link => link.target.y)
+        // .attr('x1', link => 500)
+        // .attr('y1', link => 500)
+        // .attr('x2', link => 200)
+        // .attr('y2', link => 200)
+      // console.log(links)
     })
-  linkElements.exit().remove()
-  var linkEnter = linkElements
-    .enter().append('line')
-    .attr('stroke-width', 1)
-    .attr('stroke', 'rgba(50, 50, 50, 0.2)')
-  linkElements = linkEnter.merge(linkElements)
-  // nodes
-  nodeElements = nodeGroup.selectAll('circle')
-    .data(nodes, function (node) { return node.id })
-  nodeElements.exit().remove()
-  var nodeEnter = nodeElements
-    .enter()
-    .append('circle')
-    .attr('r', 10)
-    .attr('fill', function (node) { return node.level === 1 ? 'red' : 'gray' })
-    .call(dragDrop)
-    // we link the selectNode method here
-    // to update the graph on every click
-    .on('click', selectNode)
-  nodeElements = nodeEnter.merge(nodeElements)
-  // texts
-  textElements = textGroup.selectAll('text')
-    .data(nodes, function (node) { return node.id })
-  textElements.exit().remove()
-  var textEnter = textElements
-    .enter()
-    .append('text')
-    .text(function (node) { return node.label })
-    .attr('font-size', 15)
-    .attr('dx', 15)
-    .attr('dy', 4)
-  textElements = textEnter.merge(textElements)
-}
-function updateSimulation() {
-  updateGraph()
-  simulation.nodes(nodes).on('tick', () => {
-    nodeElements
-      .attr('cx', function (node) { return node.x })
-      .attr('cy', function (node) { return node.y })
-    textElements
-      .attr('x', function (node) { return node.x })
-      .attr('y', function (node) { return node.y })
-    linkElements
-      .attr('x1', function (link) { return link.source.x })
-      .attr('y1', function (link) { return link.source.y })
-      .attr('x2', function (link) { return link.target.x })
-      .attr('y2', function (link) { return link.target.y })
-  })
-  simulation.force('link').links(links)
-  simulation.alphaTarget(0.7).restart()
-}
-// last but not least, we call updateSimulation
-// to trigger the initial render
-updateSimulation()
+
+  }, 1000)
+
+})
+
+
+
+
+// nodeElements = svg.append('g')
+//   .selectAll('circle')
+//   .data(nodes)
+//   .enter().append('circle')
+//     .attr('r', 10)
+//     .attr('fill', getNodeColor)
+//
+
+
+
+
+
+
+
+// nodes = getNodesFromDb();

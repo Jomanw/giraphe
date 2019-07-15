@@ -2,11 +2,32 @@
 
 // Import parts of electron to use
 var electron = require("electron");
-const {app, BrowserWindow, globalShortcut, ipcMain, Menu} = require('electron');
+const {app, window, BrowserWindow, globalShortcut, ipcMain, Menu, MenuItem} = require('electron');
 const path = require('path');
 const url = require('url');
+const RedisServer = require('redis-server');
+
+// Simply pass the port that you want a Redis server to listen on.
+const server = new RedisServer({
+  conf: './redis.rb'
+});
 
 
+// Frameless windows:
+// https://electronjs.org/docs/api/frameless-window
+
+// const menu = new Menu()
+// Mousetrap.bind('4', function() { console.log('4'); });
+// Mousetrap.bind('4', function() {
+//     console.log('4');
+// });
+// console.log(Mousetrap.getOwnPropertyNames(Mousetrap))
+
+// menu.append(new MenuItem({
+//   label: 'Print',
+//   accelerator: 'Command+P',
+//   click: () => { console.log('time to print stuff') }
+// }))
 // Define shortcut accelerators here.
 const shortcutCombos = ['Command+\\', 'Command+Shift+E'];
 
@@ -35,6 +56,9 @@ function createMainWindow() {
     resizable: false,
     frame: false,
     type:"toolbar",
+    webPreferences: {
+      nodeIntegration: true
+    }
   })
   // mainWindow.maximize();
 
@@ -76,6 +100,17 @@ function createMainWindow() {
       mainWindow.hide();
   });
 
+  ipcMain.on("resize", function(event, height) {
+    if ( dev ) {
+      mainWindow.setSize(800, height + 30);
+      mainWindow.setPosition(440, 212);
+    } else {
+      mainWindow.setSize(800, height + 30);
+      mainWindow.setPosition(440, 212);
+    }
+
+  });
+
   mainWindow.hide();
 }
 
@@ -101,6 +136,12 @@ app.on('ready', () => {
     globalShortcut.register(combo, () => {
       activationHandler();
     })
+  });
+  server.open((err) => {
+    if (err === null) {
+      // You may now connect a client to the Redis
+      // server bound to port 6379.
+    }
   });
   createMainWindow();
 })
