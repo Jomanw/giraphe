@@ -8,15 +8,15 @@ var baseNodes = [
   { id: '3', workspace_id: 0, title: "Fourth Note", info: "Text describing fourth idea"}
 ]
 var baseLinks = [
-  { target: '1', source: '0' , strength: 0.7 },
-  { target: '2', source: '1' , strength: 0.7 },
-  { target: '0', source: '2' , strength: 0.7 },
-  { target: '3', source: '2' , strength: 0.3 },
+  { target: '1', source: '0' , strength: 0.7, workspace_id: 0 },
+  { target: '2', source: '1' , strength: 0.7, workspace_id: 0 },
+  { target: '0', source: '2' , strength: 0.7, workspace_id: 0 },
+  { target: '3', source: '2' , strength: 0.3, workspace_id: 0 },
 ]
 
 db.serialize(function() {
   db.run("CREATE TABLE nodes(id TEXT NOT NULL, workspace_id INT, title TEXT, info TEXT)");
-  db.run("CREATE TABLE links(target TEXT NOT NULL, source TEXT NOT NULL, strength FLOAT)");
+  db.run("CREATE TABLE links(target TEXT NOT NULL, source TEXT NOT NULL, strength FLOAT, workspace_id INT)");
 
   // var stmt = db.prepare("INSERT INTO nodes VALUES (?, ?, ?, ?)");
   // for (var i = 0; i < 10; i++) {

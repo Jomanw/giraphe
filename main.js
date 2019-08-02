@@ -5,12 +5,7 @@ var electron = require("electron");
 const {app, window, BrowserWindow, globalShortcut, ipcMain, Menu, MenuItem} = require('electron');
 const path = require('path');
 const url = require('url');
-const RedisServer = require('redis-server');
 
-// Simply pass the port that you want a Redis server to listen on.
-const server = new RedisServer({
-  conf: './redis.rb'
-});
 
 
 // Frameless windows:
@@ -136,12 +131,6 @@ app.on('ready', () => {
     globalShortcut.register(combo, () => {
       activationHandler();
     })
-  });
-  server.open((err) => {
-    if (err === null) {
-      // You may now connect a client to the Redis
-      // server bound to port 6379.
-    }
   });
   createMainWindow();
 })

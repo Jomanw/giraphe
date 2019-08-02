@@ -2,16 +2,62 @@
 <meta charset="utf-8">
 
 <svg width="960" height="600"></svg>
-
-<!-- <script src="https://d3js.org/d3.v4.min.js"></script> -->
+<style type="text/css">
+/* input {
+    outline-width: 0;
+    font-size: 15px;
+    background:transparent;
+    border: none;
+} */
+textarea {
+    border: 0 none white;
+    /* overflow: hidden; */
+    /* padding: 0; */
+    /* outline: none; */
+    background-color: #D0D0D0;
+    resize: none;
+    /* width: 100%; */
+    /* color: #FFF; */
+    /* background: transparent; */
+    border: none;
+    outline: none;
+    font-size: 12px;
+}
+</style>
+<script src="data/reset_data.js"></script>
 <script>
   var d3 = require("d3");
   const {ipcRenderer} = require('electron');
+  var linkCreationMode = false;
 
   window.addEventListener('keydown', function(key) {
-    console.log(key);
-  }, true);
+    if (linkCreationMode) {
+      if (key.key == 'r') {
+        console.log("Updating simulation");
+        updateSimulation();
+      }
+      linkCreationMode = false;
+    }
+
+    // Parses the inputs to check for hotkey combos
+    if (key.metaKey) {
+      if (key.key == 'n') {
+        console.log("Creating new node");
+        createNewNodeFromSelectedNode();
+      }
+      if (key.key == 'l') {
+        console.log("Going into link creation mode");
+        linkCreationMode = true;
+        for (node in nodes) {
+
+        }
+      }
+    }
+
+
+  }
+  , true);
+
 
 </script>
-<!-- <script src="data/nodes.js"> </script> -->
 <script src="src/simulation.js"></script>

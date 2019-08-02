@@ -10,10 +10,9 @@ Making mind maps should be frictionless.
 
 
 ## TODO:
-- Create and use a database in the program
-- Create function for adding new nodes into database
-- Learn how to create local hotkeys (cmd + N, or something, only when it's pulled up, and also just how to listen for generic keys
-- Learn how to apply modify operation over all elements in the graph (add / remove attribute and update node visualization accordingly)
 - Learn how to group nodes together and combine them into a set
-- Figure out how to store the graph internally, and how to split up the files across different mindmaps / graphs; currently, we could just use a json file for each graph, but maybe we could instead have a db indexed by the graph workspace and just load that whenever necessary.
-- I feel like having the hotkeys working is a good first step; this will let me experiment more easily with the other pieces of functionality.
+- Feature for moving between workspaces
+- Collision detection for text boxes
+- dynamic resizing to make the text box into a square
+- Centering text boxes onto each node
+- Making node diameter equal to box width/height
